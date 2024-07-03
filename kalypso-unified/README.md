@@ -1,0 +1,1 @@
+All common components of Kalypso in a single repository
