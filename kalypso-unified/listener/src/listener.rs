@@ -311,7 +311,7 @@ async fn generate_proof_from_generator(
     // Create a client instance
     let client = reqwest::Client::new();
 
-    let endpoint = format!("http://0.0.0.0:{}/api/generateProof", port);
+    let endpoint = format!("http://localhost:{}/api/generateProof", port);
     log::info!("endpoint : {}", endpoint);
     // Make the POST request
     let res = client.post(endpoint).json(&payload).send().await?;
