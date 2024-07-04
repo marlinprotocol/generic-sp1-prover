@@ -1,12 +1,20 @@
 [package]
-version = "0.1.0"
 name = "kalypso-program"
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rsa = "0.6"
-sp1-sdk = { path = "../../../sdk" }
+actix-web = "4.7.0"
+common = { path = "./common" }
+ethers ={version = "2.0.10", features = ["abigen", "ws", "rustls"] }
 hex = "0.4"
+reqwest = { version = "0.11", features = ["blocking", "multipart"] }
+rsa = "0.6"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+sp1-sdk = { path = "../../../sdk" }
+uuid = { version = "1", features = ["v4"] }
+
 
 [build-dependencies]
 sp1-helper = { path = "../../../helper" }

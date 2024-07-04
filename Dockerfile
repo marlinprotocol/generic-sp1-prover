@@ -27,6 +27,8 @@ COPY sp1 ./sp1
 # replace this with git clone
 COPY rsa/program ./sp1/examples/kalypso-program/program
 
+COPY rsa/script ./sp1/examples/kalypso-program/script
+
 COPY start.sh .
 RUN chmod +x start.sh
 
