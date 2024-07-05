@@ -8,11 +8,13 @@ actix-web = "4.7.0"
 common = { path = "./common" }
 ethers ={version = "2.0.10", features = ["abigen", "ws", "rustls"] }
 hex = "0.4"
+lazy_static = "1.4"
 reqwest = { version = "0.11", features = ["blocking", "multipart"] }
 rsa = "0.6"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 sp1-sdk = { path = "../../../sdk" }
+tokio = { version = "1", features = ["full"] }
 uuid = { version = "1", features = ["v4"] }
 
 

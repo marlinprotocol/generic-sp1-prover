@@ -146,8 +146,18 @@ async fn generate_custom_benchmark(_jsonbody: web::Json<OnlyInput>) -> impl Resp
     process_proof(input_data).await
 }
 
+use tokio::sync::Semaphore;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref SEMAPHORE: Semaphore = Semaphore::new(2);
+}
+
 #[post("/generateProof")]
 async fn generate_proof(_jsonbody: web::Json<common::GenerateProofInputs>) -> impl Responder {
+    // Acquire a permit from the semaphore.
+    let _permit = SEMAPHORE.acquire().await.unwrap();
+
     let input_data = _jsonbody.ask.clone().prover_data.to_vec();
     process_proof(input_data).await
 }
