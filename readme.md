@@ -13,7 +13,7 @@ Generating the EIF.
 Preparing the Nitro Enclave environment for execution.
 ## 4. prover/
 Contains the precompiled SP1 Fibonacci prover binary.
-This binary computes Fibonacci sequences using SP1 ZKVM.
+This binary computes Fibonacci sequences using SP1.
 
 # How to run
 - ./build.sh
