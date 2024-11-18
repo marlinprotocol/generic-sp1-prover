@@ -17,6 +17,6 @@ cargo run --release --bin kalypso-program 2>&1 | tee kalypso-program.log &
 # Return to the initial directory
 cd ../..
 
-sleep 60
+# sleep 60
 # Run kalypso-listener in the foreground and log to the console and file
-./kalypso-listener
+# ./kalypso-listener

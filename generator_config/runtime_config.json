@@ -5,7 +5,7 @@
     "private_key": "8d13b631b2d10d0ea70ad06beb22b97e4aaa4c1d802e4b0ed1c7f466190bfe63",
     "proof_market_place": "0xBD3700b9e4292C4842e6CB87205192Fa96e8Ed05",
     "generator_registry": "0xCf30295AfC4F12FfAC6EE96Da3607e7749881BA7",
-    "start_block": 60632398,
+    "start_block": 96948846,
     "chain_id": 421614,
     "params_path": "./params/",
     "payment_token": "0x01d84D33CC8636F83d2bb771e184cE57d8356863",

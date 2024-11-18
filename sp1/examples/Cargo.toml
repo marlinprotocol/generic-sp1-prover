@@ -1,6 +1,6 @@
 [workspace]
 members = [
   "fibonacci/script",
-  "kalypso-program/script"
+
 ]
 resolver = "2"
