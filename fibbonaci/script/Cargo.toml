@@ -17,10 +17,6 @@ sp1-sdk = { path = "../../../sdk" }
 tokio = { version = "1", features = ["full"] }
 uuid = { version = "1", features = ["v4"] }
 
-kalypso_ivs_models = { git = "https://github.com/marlinprotocol/kalypso-unified.git", branch = "listener-refined", package = "ivs" }
-kalypso_generator_models = { git = "https://github.com/marlinprotocol/kalypso-unified.git", branch = "listener-refined", package = "generator" }
-kalypso_helper = { git = "https://github.com/marlinprotocol/kalypso-unified.git", branch = "listener-refined", package = "helper" }
-
 
 [build-dependencies]
 sp1-helper = { path = "../../../helper" }
