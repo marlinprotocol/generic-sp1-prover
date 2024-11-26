@@ -2,12 +2,18 @@
 
 
 # Stage 2: Final image
-FROM rust:latest
+FROM ubuntu:22.04
+
+# Install dependency tools
+RUN apt-get update && apt-get install -y \
+    net-tools iptables iproute2 wget bash git curl \
+    libc++1 libc++abi1 jq && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # COPY sp1_setup.sh .
-RUN curl -L "https://raw.githubusercontent.com/succinctlabs/sp1/main/sp1up/sp1up" | bash
+# RUN curl -L "https://raw.githubusercontent.com/succinctlabs/sp1/main/sp1up/sp1up" | bash
 # RUN bash sp1_setup.sh
 # RUN echo 'export PATH=$PATH:/root/.sp1/bin' >> /root/.profile
 # RUN /bin/sh -c ". /root/.profile && sp1up"
@@ -17,6 +23,8 @@ RUN curl -L "https://raw.githubusercontent.com/succinctlabs/sp1/main/sp1up/sp1up
 #     bash -c "source ~/.profile && sp1up"
 
 COPY prover ./
+COPY listener ./
+COPY generator_client ./
 # COPY generator_config ./generator_config
 # COPY sp1 ./sp1
 

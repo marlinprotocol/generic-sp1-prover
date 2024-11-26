@@ -1,8 +1,13 @@
-use actix_web::{get, post};
-use actix_web::{http::StatusCode, web, Responder};
 
-use ethers::abi::{decode, AbiType, Token};
+use actix_web::{get, http::StatusCode, post, web, App, HttpResponse, HttpServer, Responder};
+use ethers::core::types::{Address, U256};
 use ethers::types::Bytes;
+use ethers::{
+    core::k256::ecdsa::SigningKey,
+    signers::{LocalWallet, Signer, Wallet},
+};
+use ethers::abi::{decode, AbiType, Token};
+
 use reqwest::blocking::Client;
 use serde_json::Value;
 use serde::{Deserialize, Serialize};
@@ -10,6 +15,14 @@ use sp1_sdk::{utils, ProverClient, SP1Proof, SP1Stdin};
 use std::fs;
 use std::vec;
 use uuid::Uuid;
+
+use tokio::sync::Semaphore;
+use lazy_static::lazy_static;
+use kalypso_generator_models::models::{GenerateProofResponse, InputPayload};
+
+lazy_static! {
+    static ref SEMAPHORE: Semaphore = Semaphore::new(2);
+}
 
 /// The ELF we want to execute inside the zkVM.
 const ELF: &[u8] = include_bytes!("../../program/elf/riscv32im-succinct-zkvm-elf");
@@ -28,77 +41,89 @@ async fn benchmark() -> impl Responder {
     )
 }
 
-async fn process_proof(payload: kalypso_generator_models::models::InputPayload) -> impl Responder {
+#[post("/checkInput")]
+async fn check_input_handler(
+    payload: web::Json<kalypso_generator_models::models::InputPayload>,
+)-> impl Responder { 
+    return HttpResponse::Ok().json(kalypso_ivs_models::models::CheckInputResponse { valid: true });
+}
 
+#[post("/verifyInputsAndProof")]
+async fn verify_inputs_and_proof(
+    payload: web::Json<kalypso_ivs_models::models::VerifyInputsAndProof>,
+) -> impl Responder {
+    let default_response = kalypso_ivs_models::models::VerifyInputAndProofResponse {
+        is_input_and_proof_valid: true,
+    };
+    return HttpResponse::Ok().json(default_response);
+}
+
+async fn process_proof(
+    payload: InputPayload,
+) -> Result<HttpResponse, actix_web::Error> {
     utils::setup_logger();
-    // Convert Vec<u8> to String
-    let json_string = String::from_utf8(payload.get_plain_secrets().unwrap())?;
 
-    // Deserialize JSON string to serde_json::Value
-    let json_value: Value = serde_json::from_str(&json_string)?;
+    // Convert secrets from `Vec<u8>` to `String`
+    let json_string = String::from_utf8(payload.get_plain_secrets().map_err(|_| {
+        actix_web::error::ErrorBadRequest("Invalid secrets payload")  // Handle `FromUtf8Error` here
+    })?).map_err(|_| {
+        actix_web::error::ErrorBadRequest("Failed to convert secrets to UTF-8")  // Handle `FromUtf8Error` here
+    })?;
 
-    // Extract `n` as a u32
+    // Parse JSON
+    let json_value: Value = serde_json::from_str(&json_string).map_err(|_| {
+        actix_web::error::ErrorBadRequest("Invalid JSON format")
+    })?;
+
+    // Extract `n` from JSON
     let n = json_value
-    .get("n") // Get the value associated with the key "n"
-    .and_then(Value::as_u64) // Convert it to a u64 (JSON doesn't have u32)
-    .ok_or("Key 'n' missing or not a valid number")? as u32; // Convert u64 to u32
+        .get("n")
+        .and_then(Value::as_u64)
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing or invalid key 'n'"))?
+        as u32;
 
-    // n to be created from json value
+    // Simulated proof generation
     let mut stdin = SP1Stdin::new();
     stdin.write(&n);
 
-    // Generate the proof for the given program and input.
     let client = ProverClient::new();
     let (pk, vk) = client.setup(ELF);
-    let mut proof = client.prove(&pk, stdin).unwrap();
+    let mut proof = client.prove(&pk, stdin).map_err(|_| {
+        actix_web::error::ErrorInternalServerError("Proof generation failed")
+    })?;
 
-    println!("generated proof");
+    client
+        .verify(&proof, &vk)
+        .map_err(|_| actix_web::error::ErrorInternalServerError("Proof verification failed"))?;
 
-    // Read and verify the output.
-    let _ = proof.public_values.read::<u32>();
-    let a = proof.public_values.read::<u32>();
-    let b = proof.public_values.read::<u32>();
-
-    println!("a: {}", a);
-    println!("b: {}", b);
-
-    // Verify proof and public values
-    client.verify(&proof, &vk).expect("verification failed");
-
-    // Generate a unique filename using uuid
     let filename = format!("proof-{}.bin", Uuid::new_v4());
+    proof.save(&filename).map_err(|_| {
+        actix_web::error::ErrorInternalServerError("Saving proof failed")
+    })?;
 
-    // Save the proof to the file
-    proof.save(&filename).expect("saving proof failed");
-
-    let deserialized_proof = SP1Proof::load(&filename).expect("loading proof failed");
-    // Verify the deserialized proof.
+    // Load and verify proof again
+    let deserialized_proof = SP1Proof::load(&filename).map_err(|_| {
+        actix_web::error::ErrorInternalServerError("Loading proof failed")
+    })?;
     client
         .verify(&deserialized_proof, &vk)
-        .expect("verification failed");
+        .map_err(|_| actix_web::error::ErrorInternalServerError("Deserialized proof verification failed"))?;
 
-    println!("successfully generated and verified proof for the program!")    
-
-    // Read the file as bytes
-    let proof_bytes = fs::read(&filename).expect("reading proof file failed");
+    // Read proof file as bytes
+    let proof_bytes = fs::read(&filename).map_err(|_| {
+        actix_web::error::ErrorInternalServerError("Reading proof file failed")
+    })?;
     let file_bytes = Bytes::from(proof_bytes);
 
-    match get_signed_proof(payload.clone(), file_bytes).await {
-        Ok(proof_data) => {
-            // Construct JSON response with proof data
-            return HttpResponse::Ok().json(
-                kalypso_generator_models::models::GenerateProofResponse {
-                    proof: proof_data.to_vec(),
-                },
-            );
-        }
-        Err(err) => HttpResponse::InternalServerError().json(JsonResponse {
-            message: format!("Failed to generate signed proof: {}", err),
-            data: Bytes::new(),
-        }),
-    }
+    // Generate signed proof
+    let proof_data = get_signed_proof(payload, file_bytes)
+        .await
+        .map_err(|err| actix_web::error::ErrorInternalServerError(format!("Signed proof generation failed: {}", err)))?;
 
-
+    // Return successful response
+    Ok(HttpResponse::Ok().json(GenerateProofResponse {
+        proof: proof_data.to_vec(),
+    }))
 }
 
 
@@ -148,26 +173,27 @@ async fn get_signed_proof(
     Ok(encoded.into())
 }
 
-use tokio::sync::Semaphore;
-use lazy_static::lazy_static;
 
-lazy_static! {
-    static ref SEMAPHORE: Semaphore = Semaphore::new(2);
-}
 
 #[post("/generateProof")]
-async fn generate_proof(inputs: web::Json<kalypso_generator_models::models::InputPayload>) -> impl Responder {
-    // Acquire a permit from the semaphore.
+async fn generate_proof(
+    inputs: web::Json<InputPayload>,
+) -> impl Responder {
+    // Limit concurrency
     let _permit = SEMAPHORE.acquire().await.unwrap();
 
-    let input_data = inputs.0.clone();
-    process_proof(input_data).await
+    match process_proof(inputs.0.clone()).await {
+        Ok(response) => response,
+        Err(err) => err.error_response(),
+    }
 }
 
 pub fn routes(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(test)
         .service(benchmark)
+        .service(check_input_handler)
+        .service(verify_inputs_and_proof)
         .service(generate_proof);
 
     conf.service(scope);
