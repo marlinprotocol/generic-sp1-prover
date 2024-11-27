@@ -16,13 +16,13 @@ use std::fs;
 use std::vec;
 use uuid::Uuid;
 
-use tokio::sync::Semaphore;
-use lazy_static::lazy_static;
+// use tokio::sync::Semaphore;
+// use lazy_static::lazy_static;
 use kalypso_generator_models::models::{GenerateProofResponse, InputPayload};
 
-lazy_static! {
-    static ref SEMAPHORE: Semaphore = Semaphore::new(2);
-}
+// lazy_static! {
+//     static ref SEMAPHORE: Semaphore = Semaphore::new(2);
+// }
 
 /// The ELF we want to execute inside the zkVM.
 const ELF: &[u8] = include_bytes!("../../program/elf/riscv32im-succinct-zkvm-elf");
@@ -48,6 +48,13 @@ async fn check_input_handler(
     return HttpResponse::Ok().json(kalypso_ivs_models::models::CheckInputResponse { valid: true });
 }
 
+// #[post("/generateProof")]
+// async fn check_input_handler2(
+//     payload: web::Json<kalypso_generator_models::models::InputPayload>,
+// )-> impl Responder { 
+//     return HttpResponse::Ok().json(kalypso_ivs_models::models::CheckInputResponse { valid: true });
+// }
+
 #[post("/verifyInputsAndProof")]
 async fn verify_inputs_and_proof(
     payload: web::Json<kalypso_ivs_models::models::VerifyInputsAndProof>,
@@ -63,6 +70,8 @@ async fn process_proof(
 ) -> Result<HttpResponse, actix_web::Error> {
     utils::setup_logger();
 
+
+    println!("logger is set");
     // Convert secrets from `Vec<u8>` to `String`
     let json_string = String::from_utf8(payload.get_plain_secrets().map_err(|_| {
         actix_web::error::ErrorBadRequest("Invalid secrets payload")  // Handle `FromUtf8Error` here
@@ -70,18 +79,20 @@ async fn process_proof(
         actix_web::error::ErrorBadRequest("Failed to convert secrets to UTF-8")  // Handle `FromUtf8Error` here
     })?;
 
+    println!("json string {:?}", json_string);
     // Parse JSON
     let json_value: Value = serde_json::from_str(&json_string).map_err(|_| {
         actix_web::error::ErrorBadRequest("Invalid JSON format")
     })?;
 
+    println!("json value {:?}", json_value);
     // Extract `n` from JSON
     let n = json_value
         .get("n")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing or invalid key 'n'"))?
-        as u32;
+        .and_then(|v| v.as_str()?.parse::<u32>().ok())
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing or invalid key 'n'"))?;
 
+    println!("value of n extracted {:?}", n);
     // Simulated proof generation
     let mut stdin = SP1Stdin::new();
     stdin.write(&n);
@@ -177,11 +188,13 @@ async fn get_signed_proof(
 
 #[post("/generateProof")]
 async fn generate_proof(
-    inputs: web::Json<InputPayload>,
+    inputs: web::Json<kalypso_generator_models::models::InputPayload>,
 ) -> impl Responder {
-    // Limit concurrency
-    let _permit = SEMAPHORE.acquire().await.unwrap();
-
+    
+    println!("Received payload: {:?}", inputs);
+    
+    // return HttpResponse::Ok().json(kalypso_ivs_models::models::CheckInputResponse { valid: true });
+    
     match process_proof(inputs.0.clone()).await {
         Ok(response) => response,
         Err(err) => err.error_response(),
