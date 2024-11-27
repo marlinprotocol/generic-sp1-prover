@@ -52,5 +52,7 @@ RUN chmod +x setup.sh
 # supervisord config
 COPY supervisord.conf /etc/supervisord.conf
 
+COPY ./app/id.pub ./app/id.sec ./app/secp.pub ./app/secp.sec ./
+
 # entry point
 ENTRYPOINT [ "/app/setup.sh" ]
