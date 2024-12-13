@@ -19,6 +19,7 @@ target/
 test2/
 noir_prover_generator/
 **/target/
+.sp1
 
 # Ignore Docker-related files
 Dockerfile

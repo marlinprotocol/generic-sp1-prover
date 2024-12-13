@@ -1,0 +1,41 @@
+[workspace]
+members = [
+  "aggregation/script",
+  "chess/script",
+  "cycle-tracking/script",
+  "fibonacci/script",
+  "io/script",
+  "is-prime/script",
+  "json/lib",
+  "json/script",
+  "regex/script",
+  "rsa/script",
+  "ssz-withdrawals/script",
+  "tendermint/script",
+  "patch-testing/script",
+]
+resolver = "2"
+
+[workspace.package]
+version = "1.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+sp1-build = { path = "../crates/build" }
+sp1-derive = { path = "../crates/derive" }
+sp1-core-executor = { path = "../crates/core/executor" }
+sp1-core-machine = { path = "../crates/core/machine" }
+sp1-cli = { path = "../crates/cli", default-features = false }
+sp1-eval = { path = "../crates/eval", default-features = false }
+sp1-helper = { path = "../crates/helper", default-features = false }
+sp1-primitives = { path = "../crates/primitives" }
+sp1-prover = { path = "../crates/prover" }
+sp1-recursion-compiler = { path = "../crates/recursion/compiler" }
+sp1-recursion-core = { path = "../crates/recursion/core", default-features = false }
+sp1-recursion-derive = { path = "../crates/recursion/derive", default-features = false }
+sp1-recursion-gnark-ffi = { path = "../crates/recursion/gnark-ffi", default-features = false }
+sp1-recursion-program = { path = "../crates/recursion/program", default-features = false }
+sp1-recursion-circuit = { path = "../crates/recursion/circuit", default-features = false }
+sp1-sdk = { path = "../crates/sdk" }
+sp1-lib = { path = "../crates/zkvm/lib", default-features = false }
+sp1-zkvm = { path = "../crates/zkvm/entrypoint", default-features = false }

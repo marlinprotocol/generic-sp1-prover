@@ -1,0 +1,13 @@
+[package]
+name = "aggregation-script"
+version = { workspace = true }
+edition = { workspace = true }
+publish = false
+
+[dependencies]
+hex = "0.4.3"
+sp1-sdk = { workspace = true }
+tracing = "0.1.40"
+
+[build-dependencies]
+sp1-build = { workspace = true }
