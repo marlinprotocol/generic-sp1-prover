@@ -2,12 +2,20 @@
 
 
 # Stage 2: Final image
-FROM rust:latest
+FROM ubuntu:24.04
+
+# Install dependency tools
+RUN apt-get update && apt-get install -y \
+    net-tools iptables iproute2 wget bash git curl \
+    libc++1 libc++abi1 && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# RUN mkdir -p /root/.sp1/circuits/
+# RUN cp -r ./circuits/ /root/.sp1/circuits/
 # COPY sp1_setup.sh .
-RUN curl -L "https://raw.githubusercontent.com/succinctlabs/sp1/main/sp1up/sp1up" | bash
+# RUN curl -L "https://raw.githubusercontent.com/succinctlabs/sp1/main/sp1up/sp1up" | bash
 # RUN bash sp1_setup.sh
 # RUN echo 'export PATH=$PATH:/root/.sp1/bin' >> /root/.profile
 # RUN /bin/sh -c ". /root/.profile && sp1up"

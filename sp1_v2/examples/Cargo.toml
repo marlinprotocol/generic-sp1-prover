@@ -33,9 +33,12 @@ sp1-prover = { path = "../crates/prover" }
 sp1-recursion-compiler = { path = "../crates/recursion/compiler" }
 sp1-recursion-core = { path = "../crates/recursion/core", default-features = false }
 sp1-recursion-derive = { path = "../crates/recursion/derive", default-features = false }
-sp1-recursion-gnark-ffi = { path = "../crates/recursion/gnark-ffi", default-features = false }
+sp1-recursion-gnark-ffi = { path = "../crates/recursion/gnark-ffi" }
 sp1-recursion-program = { path = "../crates/recursion/program", default-features = false }
 sp1-recursion-circuit = { path = "../crates/recursion/circuit", default-features = false }
 sp1-sdk = { path = "../crates/sdk" }
 sp1-lib = { path = "../crates/zkvm/lib", default-features = false }
 sp1-zkvm = { path = "../crates/zkvm/entrypoint", default-features = false }
+
+[workspace.features]
+native = ["sp1-recursion-gnark-ffi/native"]

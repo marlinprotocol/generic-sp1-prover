@@ -12,11 +12,11 @@ fn main() {
         if #[cfg(feature = "native")] {
             println!("cargo:rerun-if-changed=go");
             // Define the output directory
-            let out_dir = env::var("OUT_DIR").unwrap();
+            // let out_dir = env::var("OUT_DIR").unwrap();
+            let out_dir = "/home/ubuntu/generic-sp1-prover/native_groth";
             let dest_path = PathBuf::from(&out_dir);
             let lib_name = "sp1gnark";
             let dest = dest_path.join(format!("lib{}.a", lib_name));
-
             println!("Building Go library at {}", dest.display());
 
             // Run the go build command
